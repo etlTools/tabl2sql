@@ -22,7 +22,7 @@ def clean_data(self, input_df: pd.DataFrame):
     input_df.applymap(lambda x: np.nan if isinstance(x, str) and (x.isspace() or not x) else x)
     # cleaning unicode out of entire dataframe
     input_df.replace({r'[^\x00-\x7F]+':''}, regex=True, inplace=True)
-    
+
     return input_df
 
 
