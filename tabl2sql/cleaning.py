@@ -72,11 +72,12 @@ def to_date(input_df):
     
     log.info("attempting to fix dates")
     for col in input_df.columns:
-        if any([piece for piece in ['dt', 'date'] if piece in col.lower()])\
+        if any([piece for piece in ['dt', 'date'] if re.match('^' + piece + '|' + piece + '$', col.lower())])\
                 or re.match('(\d{1,4})[^0-9a-zA-Z](\d{1,4})[^0-9a-zA-Z](\d{1,4})', str(input_df[col][0])):
             input_df[col] = pd.to_datetime(input_df[col], infer_datetime_format=True, errors='coerce')
             log.info("Attempted to correct {} to datetime - did it work? {}\n"
                   .format(col, input_df[col].dtype.kind == 'M'))  # 'M' is numpy dtype for datetime
+    log.info("done fixing dates")
     
     return input_df
 
