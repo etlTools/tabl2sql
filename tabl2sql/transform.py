@@ -8,17 +8,16 @@ import time
 from datetime import datetime, timedelta
 import sys
 import os
-import re
 import json
 from sqlalchemy.types import String
 import logging
 log = logging.getLogger(__name__)
 
 # project imports
-import utils
+from tabl2sql import utils
 
 
-def populate_df(self, filenames: list, seperator: str =','):
+def populate_df(filenames: list, seperator: str =','):
     """populate DataFrame for handoff to load_data()
 
     Parameters
@@ -71,7 +70,7 @@ def populate_df(self, filenames: list, seperator: str =','):
     return staging_df
 
 
-def load_data(self, load_df, db_engine, to_sql_mode='fail', dest_table='tabl2sql_{}'.format(datetime.now().strftime('%Y%m%d_%H%M%S')), dtype_dict={}):
+def load_data(load_df: pd.DataFrame, db_engine, to_sql_mode='fail', dest_table='tabl2sql_{}'.format(datetime.now().strftime('%Y%m%d_%H%M%S')), dtype_dict: dict ={}):
     """receive df from populate_df() & load to db 
 
     Parameters
@@ -107,7 +106,7 @@ def load_data(self, load_df, db_engine, to_sql_mode='fail', dest_table='tabl2sql
     log.info('loading completed in {}'.format(timedelta(seconds=seco)))
 
 
-def load_test(self, test_df):
+def load_test(test_df: pd.DataFrame):
     num_loops = test_df.shape[0] 
     for loop in range(1,num_loops):
         partial_df = pd.DataFrame(test_df.iloc[loop]) 

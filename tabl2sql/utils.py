@@ -5,7 +5,7 @@ import glob
 ord_list = list(range(48,57,1)) + list(range(65,90,1)) + [95] + list(range(97,122,1))
 
 
-def getfilesfromdir(self, dirs: list, recurs: bool =True):
+def getfilesfromdir(dirs: list, recurs: bool =True):
     """collect csv & txt file absolute paths for handoff to transform.populate_df, with option for recursive
 
     Parameters

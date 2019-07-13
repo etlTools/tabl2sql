@@ -1,10 +1,12 @@
 import logging
+import pandas as pd
+import re
 log = logging.getLogger(__name__)
 
 # project imports
-import utils
+from tabl2sql import utils
 
-def clean_data(self, input_df: pd.DataFrame):
+def clean_data(input_df: pd.DataFrame):
     """Clean data within dataframe to prepare for SQL
 
     Parameters
@@ -26,7 +28,7 @@ def clean_data(self, input_df: pd.DataFrame):
     return input_df
 
 
-def clean_cols(self, input_df: pd.DataFrame):
+def clean_cols(input_df: pd.DataFrame):
     """Clean dataframe column names to prepare for SQL - originally developed within Oracle's reqs
 
     Parameters
@@ -54,7 +56,7 @@ def clean_cols(self, input_df: pd.DataFrame):
     return input_df
     
     
-def to_date(self, input_df):
+def to_date(input_df):
     """try to convert any columns with 'dt' or 'date' in name or with a regex date in [0] to datetime
 
     Parameters
@@ -79,7 +81,7 @@ def to_date(self, input_df):
     return input_df
 
     
-def avoid_clob(self, input_df: pd.DataFrame):
+def avoid_clob(input_df: pd.DataFrame):
     """convert objects to strings to prepare for varchar because to_sql defaults to creating clobs in oracle
 
     Parameters
