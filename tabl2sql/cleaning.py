@@ -1,10 +1,13 @@
-import logging
 import pandas as pd
 import re
+import json
+import numpy as np
+from sqlalchemy.types import String
+import logging
 log = logging.getLogger(__name__)
 
 # project imports
-from tabl2sql import utils
+import .utils as utils
 
 def clean_data(input_df: pd.DataFrame):
     """Clean data within dataframe to prepare for SQL

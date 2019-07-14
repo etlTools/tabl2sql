@@ -1,8 +1,24 @@
+import argparse
 import sys
 from datetime import datetime
 import glob
 
 ord_list = list(range(48,57,1)) + list(range(65,90,1)) + [95] + list(range(97,122,1))
+
+
+def parse_args(args):
+    parser = argparse.ArgumentParser(
+        description='transform CSV to oracle database',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument('-files', dest="filenames", default=[], nargs="+" )
+    parser.add_argument('-dirs', dest="dirs", default=[], nargs="+" )
+    parser.add_argument('-table', dest="table", default='py_imp_{}'.format(datetime.now().strftime('%Y%m%d_%H%M%S')))
+    parser.add_argument('-mode', default='fail')
+    parser.add_argument('-db')
+    parser.add_argument('-sep', default=',')
+
+    return parser.parse_args(args)
 
 
 def getfilesfromdir(dirs: list, recurs: bool =True):

@@ -1,20 +1,16 @@
 
 # python imports
-import argparse
 import pandas as pd
-import numpy as np
 import math
 import time
 from datetime import datetime, timedelta
 import sys
-import os
-import json
-from sqlalchemy.types import String
 import logging
 log = logging.getLogger(__name__)
 
 # project imports
-from tabl2sql import utils
+import .utils as utils
+import .cleaning as cleaning
 
 
 def populate_df(filenames: list, seperator: str =','):
@@ -106,7 +102,7 @@ def load_data(load_df: pd.DataFrame, db_engine, to_sql_mode='fail', dest_table='
     log.info('loading completed in {}'.format(timedelta(seconds=seco)))
 
 
-def load_test(test_df: pd.DataFrame):
+def load_test(load_df: pd.DataFrame, db_engine, to_sql_mode: str='fail', dest_table: str='tabl2sql_{}'.format(datetime.now().strftime('%Y%m%d_%H%M%S')), dtype_dict: dict ={}):
     num_loops = test_df.shape[0] 
     for loop in range(1,num_loops):
         partial_df = pd.DataFrame(test_df.iloc[loop]) 
@@ -114,3 +110,42 @@ def load_test(test_df: pd.DataFrame):
             partial_df.to_sql(dest_table, db_engine, if_exists='append', dtype=dtype_dict, index=False)
         except:
             log.error("row {}: {} \n\t {}".format(loop, test_df.iloc[loop], test_df.iloc[loop].dtypes))
+
+
+def main(args):
+    """option to run package as script
+
+    Parameters
+    ----------
+    -files : string
+        comma separated string to be treated as list of files
+    -dirs : string
+        directories to pull files from 
+    -table : string
+        name of destination table in database. if exists, to_sql_mode must == 'append'. if not provided, function will create one
+    -db_engine : sqlalchemy engine
+        create a database connection as a variable & pass here
+    -mode : string
+        to_sql_mode, read pd.to_sql docs
+    -sep : string
+        define separator used in .txt when not csv
+
+    Notes
+    -----
+    user must create engine using sqlalchemy & provide
+    """
+    pargs = utils.parse_args(args)
+    
+    filenames = pargs.filenames
+    if len(pargs.dirs) > 0:
+        filenames.extend(utils.getfilesfromdir(pargs.dirs))
+    
+    input_df = populate_df(filenames, seperator=pargs.sep)
+    
+    input_df = cleaning.clean_data(input_df)
+    input_df = cleaning.clean_cols(input_df)
+    input_df = cleaning.to_date(input_df)
+    input_df, dtype_dict = cleaning.avoid_clob(input_df)
+    
+    load_data(load_df=input_df, db_engine=pargs.db, to_sql_mode=pargs.mode, dest_table=pargs..table, dtype_dict=dtype_dict)
+    
