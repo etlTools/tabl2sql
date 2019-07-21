@@ -9,12 +9,12 @@ import logging
 log = logging.getLogger(__name__)
 
 # project imports
-import .utils as utils
-import .cleaning as cleaning
+from . import utils
+from . import cleaning
 
 
 def populate_df(filenames: list, seperator: str =','):
-    """populate DataFrame for handoff to load_data()
+    """populate DataFrame for hand-off to load_data()
 
     Parameters
     ----------
@@ -38,7 +38,6 @@ def populate_df(filenames: list, seperator: str =','):
     log.info("Coalescing/preparing files:\n\t{} ".format(filenames))
     
     for filename in filenames:
-        dtype_dict = dict()
         file_count += 1
         read_df = pd.read_csv(r"{}".format(filename), sep=seperator, encoding='cp1252')
 
@@ -53,10 +52,10 @@ def populate_df(filenames: list, seperator: str =','):
             log.info("\n checking for new columns in {} of {}: {}".format(file_count, total_files, filename))
             for col in read_df.columns:
                 if col not in inp_cols:
-                    utils.write_err("*** adding column {} ***".format(col))
+                    log.info("*** adding column {} ***".format(col))
                     inp_cols.append(col)
             staging_df = staging_df.append(read_df, ignore_index=True)
-            log.info("\n\t appending {} rows, totalling {}".format(read_df.shape[0], staging_df.shape[0]))
+            log.info("\n\t appending {} rows, totaling {}".format(read_df.shape[0], staging_df.shape[0]))
             
     log.info("\n\ndf info: \n{}".format(staging_df.info(verbose=True)))
     log.info("\ndf length: \n{}".format(staging_df.shape[0]))
@@ -147,5 +146,5 @@ def main(args):
     input_df = cleaning.to_date(input_df)
     input_df, dtype_dict = cleaning.avoid_clob(input_df)
     
-    load_data(load_df=input_df, db_engine=pargs.db, to_sql_mode=pargs.mode, dest_table=pargs..table, dtype_dict=dtype_dict)
+    load_data(load_df=input_df, db_engine=pargs.db, to_sql_mode=pargs.mode, dest_table=pargs.table, dtype_dict=dtype_dict)
     

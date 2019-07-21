@@ -1,3 +1,5 @@
+
+# python imports
 import pandas as pd
 import re
 import json
@@ -7,7 +9,7 @@ import logging
 log = logging.getLogger(__name__)
 
 # project imports
-import .utils as utils
+from . import utils
 
 def clean_data(input_df: pd.DataFrame):
     """Clean data within dataframe to prepare for SQL

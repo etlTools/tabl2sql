@@ -1,3 +1,5 @@
+
+# python imports
 import argparse
 import sys
 from datetime import datetime
@@ -37,9 +39,11 @@ def getfilesfromdir(dirs: list, recurs: bool =True):
         A list of files within specified directories to be handed off to transform.populate_df
     """
     
-    list_of_lists = glob.glob(dir+ '**/*', recursive=recurs)
-    all_files = [inner for outer in list_of_lists for inner in outer]
+    all_files = []
+    for dir in dirs:
+        all_files.extend(glob.glob(dir+ '**/*', recursive=recurs))
+    # all_files = [inner for outer in list_of_lists for inner in outer] # obviated by extend ilo append above
     exts = ['.txt', '.csv']
-    files = [file for file in all_files if any([ext for ext in exts if file.endswith(piece)])]
+    files = [file for file in all_files if any([ext for ext in exts if file.endswith(ext)])]
 
     return sorted(files)
