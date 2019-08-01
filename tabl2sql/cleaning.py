@@ -24,12 +24,9 @@ def clean_data(input_df: pd.DataFrame):
     input_df: pd.DataFrame: 
         cleaned DataFrame 
     """
-    
-    # cleaning blanks and whitespace
-    input_df.applymap(lambda x: np.nan if isinstance(x, str) and (x.isspace() or not x) else x)
-    # cleaning unicode out of entire dataframe
+    # input_df = input_df.applymap(lambda x: '' if x!=x else ('' if isinstance(x, str) and x.isspace() else (x.replace(r'[^\x00-\x7F]+','') if isinstance(x, str) else x)))
+    # input_df = input_df.applymap(lambda x: None if isinstance(x, str) and x.isspace() else (x.replace(r'[^\x00-\x7F]+','') if isinstance(x, str) else x))
     input_df.replace({r'[^\x00-\x7F]+':''}, regex=True, inplace=True)
-
     return input_df
 
 
@@ -77,7 +74,7 @@ def to_date(input_df):
     
     log.info("attempting to fix dates")
     for col in input_df.columns:
-        if any([piece for piece in ['dt', 'date'] if re.match('^' + piece + '|' + piece + '$', col.lower())])\
+        if any([piece for piece in ['dt', 'date'] if re.match('^{0}|.*{0}$'.format(piece), col.lower())])\
                 or re.match('(\d{1,4})[^0-9a-zA-Z](\d{1,4})[^0-9a-zA-Z](\d{1,4})', str(input_df[col][0])):
             input_df[col] = pd.to_datetime(input_df[col], infer_datetime_format=True, errors='coerce')
             log.info("Attempted to correct {} to datetime - did it work? {}\n"
@@ -104,11 +101,15 @@ def avoid_clob(input_df: pd.DataFrame):
         A dictionary for df.to_sql with dtypes and lengths for columns that have been converted to string
     """
     
-    log.info("attempting to fix dates")
+    dtype_dict = dict()
+    log.info("building string dict")
     for col in input_df.columns:
         if input_df[col].dtype == 'object':
-            input_df[col] = input_df[col].astype(str)
+            # input_df[col] = input_df[col].astype(str)
+            input_df[col] = input_df[col].apply(lambda x: None if pd.isnull(x) else \
+                            (None if isinstance(x, str) and x.isspace() else str(x)))
             dtype_dict[col] = String(input_df[col].apply(str).map(len).max())
+            # input_df[col].replace({r'^nan$':None}, regex=True, inplace=True)
     try:
         log.info("\nlist of string conversions: \n{}".format(json.dumps(dtype_dict, indent=2)))
     except:

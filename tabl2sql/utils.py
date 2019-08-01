@@ -17,8 +17,13 @@ def parse_args(args):
     parser.add_argument('-dirs', dest="dirs", default=[], nargs="+" )
     parser.add_argument('-table', dest="table", default='py_imp_{}'.format(datetime.now().strftime('%Y%m%d_%H%M%S')))
     parser.add_argument('-mode', default='fail')
+    parser.add_argument('-sql')
+    parser.add_argument('-driver')
+    parser.add_argument('-user')
+    parser.add_argument('-pw', help='local db - pw only. network db: `pw@server.port`')
     parser.add_argument('-db')
-    parser.add_argument('-sep', default=',')
+    parser.add_argument('-sep')
+    parser.add_argument('-encoding')
 
     return parser.parse_args(args)
 
