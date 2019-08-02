@@ -4,7 +4,7 @@ logging module is used
 
 # todo
 add ability to accept excel files
-use hdf5 to allow any file size to work on lower RAM
+use hdf5 to allow any file size to work on lower RAM. perhaps dask after to speed up. alternatively could add steps for (1)check file size, (2)break up if large then (3) run main process one by one or in chunks
 parallelize
 
 # example run
