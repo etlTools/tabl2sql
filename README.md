@@ -25,4 +25,3 @@ tabl2sql.transform.main(args)
 
 file size | row count | time        | Hardware info                                                         | notes
 7.5GB     | 8.3M rows | 2hrs 4min   | HP DL360 gen9 , RHEL 7.3 , 2 XEON E5-2643 v4 @ 3.4GHz , 64GB RAM      |
-    
