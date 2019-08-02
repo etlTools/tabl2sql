@@ -24,8 +24,6 @@ def clean_data(input_df: pd.DataFrame):
     input_df: pd.DataFrame: 
         cleaned DataFrame 
     """
-    # input_df = input_df.applymap(lambda x: '' if x!=x else ('' if isinstance(x, str) and x.isspace() else (x.replace(r'[^\x00-\x7F]+','') if isinstance(x, str) else x)))
-    # input_df = input_df.applymap(lambda x: None if isinstance(x, str) and x.isspace() else (x.replace(r'[^\x00-\x7F]+','') if isinstance(x, str) else x))
     input_df.replace({r'[^\x00-\x7F]+':''}, regex=True, inplace=True)
     return input_df
 
@@ -43,10 +41,11 @@ def clean_cols(input_df: pd.DataFrame):
     input_df: pd.DataFrame: 
         DataFrame with cleaned & deduplicated column names
     """
-    
+    # remove whitespace, replace with underscores
     input_df.columns = input_df.columns.str.strip()
     input_df.columns = input_df.columns.str.replace(' ', '_')
     input_df.columns = input_df.columns.str.lower()
+    # leave only letters, numbers and underscores
     for j in range(len(input_df.columns.values)):
         input_df.columns.values[j] = "".join(i for i in input_df.columns.values[j] if ord(i) in utils.ord_list)
     # make duplicate column names unique
@@ -59,7 +58,7 @@ def clean_cols(input_df: pd.DataFrame):
     
     
 def to_date(input_df):
-    """try to convert any columns with 'dt' or 'date' in name or with a regex date in [0] to datetime
+    """try to convert any columns with 'dt' or 'date' at beginning or end of name or with a regex date in [0] to datetime
 
     Parameters
     ----------
@@ -95,7 +94,7 @@ def avoid_clob(input_df: pd.DataFrame):
     Returns
     ----------
     input_df: pd.DataFrame: 
-        DataFrame with object fields converted to string
+        DataFrame with object fields converted to string & replaced empties and whitespace with `None`
         
     dtype_dict: dictionary: 
         A dictionary for df.to_sql with dtypes and lengths for columns that have been converted to string
@@ -109,7 +108,6 @@ def avoid_clob(input_df: pd.DataFrame):
             input_df[col] = input_df[col].apply(lambda x: None if pd.isnull(x) else \
                             (None if isinstance(x, str) and x.isspace() else str(x)))
             dtype_dict[col] = String(input_df[col].apply(str).map(len).max())
-            # input_df[col].replace({r'^nan$':None}, regex=True, inplace=True)
     try:
         log.info("\nlist of string conversions: \n{}".format(json.dumps(dtype_dict, indent=2)))
     except:

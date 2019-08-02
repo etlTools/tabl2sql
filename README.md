@@ -1,21 +1,28 @@
 # tabl2sql
 package for loading tabular data to SQL databases
-
 logging module is used
----------example, to change logging level to INFO (most logs in this package):
-	logging.basicConfig(level=logging.INFO)
-    
 
-example run:
+# todo
+add ability to accept excel files
+use hdf5 to allow any file size to work on lower RAM
+parallelize
+
+# example run
 import logging
 logging.basicConfig(level=logging.INFO)
 import tabl2sql
 args = ['-dirs', '/home/share/data/', 
-        '-table', 'table_test', 
-        '-sql', 'oracle', 
-        '-driver', 'cx_oracle', 
+        '-table', 'new_table', 
+        '-sql', 'mysql', 
+        '-driver', 'mysqlconnector', 
         '-user', 'user', 
-        '-pw', 'user@server:1521', 
-        '-target', 'ORCL1', 
+        '-pw', 'password', 
+        '-target', 'new_db', 
         '-sep', '\\t']
 tabl2sql.transform.main(args)
+
+# benchmarking
+
+file size | row count | time        | Hardware info                                                         | notes
+7.5GB     | 8.3M rows | 2hrs 4min   | HP DL360 gen9 , RHEL 7.3 , 2 XEON E5-2643 v4 @ 3.4GHz , 64GB RAM      |
+    

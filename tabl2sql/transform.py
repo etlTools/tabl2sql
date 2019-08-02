@@ -98,8 +98,12 @@ def load_data(load_df: pd.DataFrame, db_engine, to_sql_mode='fail', dest_table='
         partial_df.to_sql(dest_table, db_engine, if_exists=to_sql_mode, dtype=dtype_dict, index=False)
         for loop in range(1, num_loops):
             partial_df = load_df.iloc[loop*50000+1:(loop+1)*50000+1]
-            partial_df.to_sql(dest_table, db_engine, if_exists='append', dtype=dtype_dict, index=False)
-            log.info("\n\loaded {} lines".format((loop+1)*50000))
+            try: 
+                partial_df.to_sql(dest_table, db_engine, if_exists='append', dtype=dtype_dict, index=False)
+            except ConnectionResetError:
+                log.warning("you may need to increase allowed packet size. \n\tmysql ex, increase to 128mb: `set global max_allowed_packet=134217728;`")
+                sys.exit(1)
+            log.info("loaded {} lines".format((loop+1)*50000))
 
     log.info('loading completed in {}'.format(timedelta(seconds=int(time.time() - start_time))))
 
@@ -119,24 +123,9 @@ def main(args: list):
 
     Parameters
     ----------
-    -files : string
-        comma separated string to be treated as list of files
-    -dirs : string
-        directories to pull files from 
-    -table : string
-        name of destination table in database. if exists, to_sql_mode must == 'append'. if not provided, function will create one
-    -db : string
-        name of destination db
-    -mode : string
-        to_sql_mode, read pd.to_sql docs
-    -sep : string
-        define separator used in .txt when not csv
-    -encoding : string
-        read pd.read_csv docs
+    args : list
+        list of args & values to be broken down by utils.parse_args()
 
-    Notes
-    -----
-    user must create engine using sqlalchemy & provide
     """
     start_time = time.time()
     
@@ -146,7 +135,7 @@ def main(args: list):
     if len(pargs.dirs) > 0:
         filenames.extend(utils.getfilesfromdir(pargs.dirs))
     
-    conn = create_engine("{}+{}://{}:{}/{}".format(pargs.sql, pargs.driver, pargs.user, pargs.pw, pargs.db))
+    conn = create_engine("{}+{}://{}:{}{}/{}".format(pargs.sql, pargs.driver, pargs.user, pargs.pw, pargs.host, pargs.db))
     input_df = populate_df(filenames, seperator=pargs.sep, encoding=pargs.encoding)
     log.debug('cleaning data start: {}'.format(timedelta(seconds=int(time.time() - start_time))))
     input_df = cleaning.clean_data(input_df)
@@ -159,5 +148,5 @@ def main(args: list):
     log.debug('string conversion result:\n{}\n\n\n\n\n\n load start: {}'.format(input_df.head(), timedelta(seconds=int(time.time() - start_time))))
     
     load_data(load_df=input_df, db_engine=conn, to_sql_mode=pargs.mode, dest_table=pargs.table, dtype_dict=dtype_dict)
-    log.debug('Transform Completed: {}'.format(timedelta(seconds=int(time.time() - start_time))))
+    log.info('Transform Completed in {}'.format(timedelta(seconds=int(time.time() - start_time))))
     
