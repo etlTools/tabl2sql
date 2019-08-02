@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 with open("README.md", "r") as readme_file:
     readme = readme_file.read()
 
-requirements = ['tabl2sql', "pandas>=0.20.0"]
+requirements = ['argparse', 'datetime', 'glob', 'json', 'logging', 'math', 'numpy', 'pandas>=0.20.0', 're', 'sqlalchemy', 'sys', 'sys', 'tabl2sql', 'time']
 
 
 setup(name='tabl2sql',
@@ -21,3 +21,6 @@ setup(name='tabl2sql',
 			"License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
 		],
       zip_safe=False)
+
+
+
