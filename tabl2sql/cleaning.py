@@ -24,7 +24,10 @@ def clean_data(input_df: pd.DataFrame):
     input_df: pd.DataFrame: 
         cleaned DataFrame 
     """
+    # clean unicode & whitespace
     input_df.replace({r'[^\x00-\x7F]+':''}, regex=True, inplace=True)
+    input_df = input_df.applymap(lambda x: np.nan if pd.isnull(x) else \
+                    (np.nan if isinstance(x, str) and x.isspace() else str(x)))
     return input_df
 
 
@@ -94,7 +97,7 @@ def avoid_clob(input_df: pd.DataFrame):
     Returns
     ----------
     input_df: pd.DataFrame: 
-        DataFrame with object fields converted to string & replaced empties and whitespace with `None`
+        DataFrame with object fields converted to string & replaced empties and whitespace with nan
         
     dtype_dict: dictionary: 
         A dictionary for df.to_sql with dtypes and lengths for columns that have been converted to string
@@ -104,9 +107,6 @@ def avoid_clob(input_df: pd.DataFrame):
     log.info("building string dict")
     for col in input_df.columns:
         if input_df[col].dtype == 'object':
-            # input_df[col] = input_df[col].astype(str)
-            input_df[col] = input_df[col].apply(lambda x: None if pd.isnull(x) else \
-                            (None if isinstance(x, str) and x.isspace() else str(x)))
             dtype_dict[col] = String(input_df[col].apply(str).map(len).max())
     try:
         log.info("\nlist of string conversions: \n{}".format(json.dumps(dtype_dict, indent=2)))

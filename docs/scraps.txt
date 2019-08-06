@@ -1,0 +1,5 @@
+    # from transform.load_data check if destination table string fields are long enough
+    if to_sql_mode == 'append':
+        cols_df = pd.read_sql('describe {}'.format(dest_table), db_engine)
+        if 'mysql' in str(db_engine):
+            cols_df['len']=cols_df.Type.str.extract(r'(\d+)')

@@ -5,7 +5,9 @@ import math
 import time
 from datetime import datetime, timedelta
 import sys
+import re
 from sqlalchemy import create_engine
+from sqlalchemy.exc import DataError, DatabaseError
 import logging
 log = logging.getLogger(__name__)
 
@@ -90,6 +92,7 @@ def load_data(load_df: pd.DataFrame, db_engine, to_sql_mode='fail', dest_table='
     user must create engine using sqlalchemy & provide
     """
     start_time = time.time()
+            
     if load_df.shape[0] < 50000:
         load_df.to_sql(dest_table, db_engine, if_exists=to_sql_mode, dtype=dtype_dict, index=False)
     else:
@@ -98,11 +101,32 @@ def load_data(load_df: pd.DataFrame, db_engine, to_sql_mode='fail', dest_table='
         partial_df.to_sql(dest_table, db_engine, if_exists=to_sql_mode, dtype=dtype_dict, index=False)
         for loop in range(1, num_loops):
             partial_df = load_df.iloc[loop*50000+1:(loop+1)*50000+1]
-            try: 
-                partial_df.to_sql(dest_table, db_engine, if_exists='append', dtype=dtype_dict, index=False)
-            except ConnectionResetError:
-                log.warning("you may need to increase allowed packet size. \n\tmysql ex, increase to 128mb: `set global max_allowed_packet=134217728;`")
-                sys.exit(1)
+            advance = False
+            while advance == False:
+                try: 
+                    partial_df.to_sql(dest_table, db_engine, if_exists='append', dtype=dtype_dict, index=False)
+                    advance = True
+                except ConnectionResetError:
+                    size_resp = input("you may need to increase allowed packet size. \n\tmysql ex, increase to 128mb: `set global max_allowed_packet=134217728;`\nWaiting....Fixed? (enter `yes` to continue  or `quit`)")
+                    if size_resp == 'quit': sys.exit(1)
+                except DataError as err:
+                    field = re.search(r"Data too long for column '(.*)'", str(err))
+                    if field is None:
+                        len_resp = input('Unrecognized error: {} \nWaiting....Fixed? (enter `yes` to continue or `quit`)'.format(str(err)))
+                    else:
+                        len_resp = input('field `{0}` length in destination table must be increased to {1} char \nex: `alter table {2} modify {0} varchar({1});` \nWaiting....Fixed? (enter `yes` to continue  or `quit`)'.format(field.group(1), load_df[field.group(1)].str.len().max(), dest_table))
+                    if len_resp == 'quit': sys.exit(1)
+                except DatabaseError as err:
+                    field = re.search(r"Data truncated for column '(.*)'", str(err))
+                    if field is None:
+                        type_resp = input('Unrecognized error: {} \nWaiting....Fixed? (enter `yes` to continue or `quit`)'.format(str(err)))
+                    else:
+                        type_resp = input('field `{0}` wrong datatype - fix dest table to: len {1} char \nex: `alter table {2} modify {0} varchar({1});` \nWaiting....Fixed? (enter `yes` to continue  or `quit`)'.format(field.group(1), load_df[field.group(1)].str.len().max(), dest_table))
+                    if type_resp == 'quit': sys.exit(1)
+                except:
+                    unknown_resp = input('Unrecognized error: {} \nWaiting....Fixed? (enter `yes` to continue or `quit`)'.format(sys.exc_info()[0]))
+                    if unknown_resp == 'quit': sys.exit(1)
+                
             log.info("loaded {} lines".format((loop+1)*50000))
 
     log.info('loading completed in {}'.format(timedelta(seconds=int(time.time() - start_time))))
@@ -149,4 +173,5 @@ def main(args: list):
     
     load_data(load_df=input_df, db_engine=conn, to_sql_mode=pargs.mode, dest_table=pargs.table, dtype_dict=dtype_dict)
     log.info('Transform Completed in {}'.format(timedelta(seconds=int(time.time() - start_time))))
+    conn.close()
     
