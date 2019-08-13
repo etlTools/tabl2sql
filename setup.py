@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 with open("README.md", "r") as readme_file:
     readme = readme_file.read()
 
-requirements = ['argparse', 'datetime', 'numpy', 'pandas>=0.20.0', 'sqlalchemy', 'tabl2sql']
+requirements = ['numpy', 'pandas>=0.20.0', 'sqlalchemy', 'tabl2sql']
 
 
 setup(name='tabl2sql',

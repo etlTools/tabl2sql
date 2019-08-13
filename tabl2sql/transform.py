@@ -23,8 +23,8 @@ def populate_df(filenames: list, seperator: str =',', encoding: str = 'cp1252'):
     ----------
     filenames : list
         A list of files to be imported, output of utils.getfilesfromdir() can be used
-    separator : string
-        define separator used in .txt when not csv
+    seperator : string
+        define seperator used in .txt when not csv
 
     Returns
     ----------
@@ -43,7 +43,9 @@ def populate_df(filenames: list, seperator: str =',', encoding: str = 'cp1252'):
     for filename in filenames:
         file_count += 1
         log.info("reading file {} of {}: {}".format(file_count, total_files, filename))
-        read_df = pd.read_csv(r"{}".format(filename), sep=seperator, encoding=encoding)
+        engine = 'c'
+        if seperator == '\t': engine = 'python'
+        read_df = pd.read_csv(r"{}".format(filename), sep=seperator, encoding=encoding, engine=engine)
 
         # setup column list & df
         if file_count == 1:

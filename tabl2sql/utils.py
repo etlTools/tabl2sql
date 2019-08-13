@@ -5,7 +5,7 @@ import sys
 from datetime import datetime
 import glob
 
-ord_list = list(range(48,57,1)) + list(range(65,90,1)) + [95] + list(range(97,122,1))
+ord_list = list(range(48,58,1)) + list(range(65,91,1)) + [95] + list(range(97,123,1))
 
 
 def parse_args(args):
@@ -56,7 +56,7 @@ def parse_args(args):
     parser.add_argument('-host', default='@localhost', help='convention:`@host:port`')
     parser.add_argument('-db')
     parser.add_argument('-sep', default=',')
-    parser.add_argument('-encoding')
+    parser.add_argument('-encoding', default='cp1252')
 
     return parser.parse_args(args)
 
