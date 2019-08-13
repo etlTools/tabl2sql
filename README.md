@@ -14,7 +14,8 @@ args = ['-dirs', '/home/share/data/',
         '-driver', 'mysqlconnector',  
         '-user', 'user',  
         '-pw', 'password',  
-        '-target', 'new_db',  
+        '-host', '@server:port',  
+        '-db', 'target_database',  
         '-sep', '\\t']  
 tabl2sql.transform.main(args)
 ```
