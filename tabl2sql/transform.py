@@ -173,5 +173,4 @@ def main(args: list):
     
     load_data(load_df=input_df, db_engine=conn, to_sql_mode=pargs.mode, dest_table=pargs.table, dtype_dict=dtype_dict)
     log.info('Transform Completed in {}'.format(timedelta(seconds=int(time.time() - start_time))))
-    conn.close()
     

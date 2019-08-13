@@ -55,7 +55,7 @@ def parse_args(args):
     parser.add_argument('-pw')
     parser.add_argument('-host', default='@localhost', help='convention:`@host:port`')
     parser.add_argument('-db')
-    parser.add_argument('-sep')
+    parser.add_argument('-sep', default=',')
     parser.add_argument('-encoding')
 
     return parser.parse_args(args)
