@@ -1,5 +1,10 @@
-    # from transform.load_data check if destination table string fields are long enough
-    if to_sql_mode == 'append':
-        cols_df = pd.read_sql('describe {}'.format(dest_table), db_engine)
-        if 'mysql' in str(db_engine):
-            cols_df['len']=cols_df.Type.str.extract(r'(\d+)')
+# from transform.load_data check if destination table string fields are long enough
+if to_sql_mode == 'append':
+    cols_df = pd.read_sql('describe {}'.format(dest_table), db_engine)
+    if 'mysql' in str(db_engine):
+        cols_df['len']=cols_df.Type.str.extract(r'(\d+)')
+            
+# load data in parallel with dask
+dto_sql = dask.delayed(pd.DataFrame.to_sql)
+out = [dto_sql(d, 'table_name', rfprep_conn) for d in input_df.to_delayed()]
+dask.compute(*out)
