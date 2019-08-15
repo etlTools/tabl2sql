@@ -38,6 +38,10 @@ def parse_args(args):
         name of destination db
     -sep : string
         define separator used in .txt when not csv
+    -quote_char : string
+        define character used to enclose data when not default double-quote "
+    -quoting_lev : int
+        read pd.read_csv docs - use 3 for no quoting
     -encoding : string
         read pd.read_csv docs
     """
@@ -56,6 +60,8 @@ def parse_args(args):
     parser.add_argument('-host', default='@localhost', help='convention:`@host:port`')
     parser.add_argument('-db')
     parser.add_argument('-sep', default=',')
+    parser.add_argument('-quote_char', default='"')
+    parser.add_argument('-quoting_lev', default=0)
     parser.add_argument('-encoding', default='cp1252')
 
     return parser.parse_args(args)

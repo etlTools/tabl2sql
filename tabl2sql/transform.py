@@ -16,7 +16,7 @@ from . import utils
 from . import cleaning
 
 
-def populate_df(filenames: list, seperator: str =',', encoding: str = 'cp1252'):
+def populate_df(filenames: list, seperator: str =',', encoding: str = 'cp1252', quote_char: str = '"', quoting_lev: int =0):
     """populate DataFrame for hand-off to load_data()
 
     Parameters
@@ -44,8 +44,8 @@ def populate_df(filenames: list, seperator: str =',', encoding: str = 'cp1252'):
         file_count += 1
         log.info("reading file {} of {}: {}".format(file_count, total_files, filename))
         engine = 'c'
-        if seperator == '\t': engine = 'python'
-        read_df = pd.read_csv(r"{}".format(filename), sep=seperator, encoding=encoding, engine=engine)
+        if len(seperator) > 1: engine = 'python'
+        read_df = pd.read_csv(r"{}".format(filename), sep=seperator, encoding=encoding, engine=engine, quotechar=quote_char, quoting=quoting_lev)
 
         # setup column list & df
         if file_count == 1:
@@ -162,7 +162,7 @@ def main(args: list):
         filenames.extend(utils.getfilesfromdir(pargs.dirs))
     
     conn = create_engine("{}+{}://{}:{}{}/{}".format(pargs.sql, pargs.driver, pargs.user, pargs.pw, pargs.host, pargs.db))
-    input_df = populate_df(filenames, seperator=pargs.sep, encoding=pargs.encoding)
+    input_df = populate_df(filenames, seperator=pargs.sep, encoding=pargs.encoding, quote_char=pargs.quote_char, quoting_lev=pargs.quoting_lev)
     log.debug('cleaning data start: {}'.format(timedelta(seconds=int(time.time() - start_time))))
     input_df = cleaning.clean_data(input_df)
     log.debug('cleaning data result:\n{}\n\n\n\n\n\n cleaning columns start: {}'.format(input_df.head(), timedelta(seconds=int(time.time() - start_time))))

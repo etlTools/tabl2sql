@@ -55,7 +55,7 @@ def clean_cols(input_df: pd.DataFrame):
     input_df.columns = pd.io.parsers.ParserBase({'names':input_df.columns})._maybe_dedup_names(input_df.columns)
     # these are reserved oracle words
     input_df.rename(columns={'type':'type_', 'group':'group_', 'date': 'date_', 'resource':'resource_',
-                           'start':'start_', 'end':'end_'}, inplace=True)
+                           'start':'start_', 'end':'end_', 'sysdate':'sysdate_'}, inplace=True)
     
     return input_df
     
@@ -108,7 +108,11 @@ def avoid_clob(input_df: pd.DataFrame):
     log.info("building string dict")
     for col in input_df.columns:
         if input_df[col].dtype == 'object':
-            dtype_dict[col] = String(input_df[col].apply(str).map(len).max())
+            char_len = input_df[col].apply(str).map(len).max()
+            if char_len > 4000:
+                log.info("sorry bucko, {} is stuck as clob length {}".format(col, char_len))
+            else:
+                dtype_dict[col] = String()
     try:
         log.info("\nlist of string conversions: \n{}".format(json.dumps(dtype_dict, indent=2)))
     except:
