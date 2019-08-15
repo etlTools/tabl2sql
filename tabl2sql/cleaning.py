@@ -5,6 +5,7 @@ import re
 import json
 import numpy as np
 from sqlalchemy.types import String
+import dateutil
 import logging
 log = logging.getLogger(__name__)
 
@@ -60,6 +61,22 @@ def clean_cols(input_df: pd.DataFrame):
     return input_df
     
     
+def is_date(string, fuzzy=False):
+    """
+    Return whether the string can be interpreted as a date. credit to Alex Riley, https://stackoverflow.com/a/25341965
+
+    :param string: str, string to check for date
+    :param fuzzy: bool, ignore unknown tokens in string if True
+    """
+    try: 
+        dateutil.parser.parse(string, fuzzy=fuzzy)
+        if re.match('(?:\d{1}|\d{2}|\d{4})[^0-9a-zA-Z](\d{1,4})[^0-9a-zA-Z](?:\d{1}|\d{2}|\d{4})', string):
+            return True
+    
+    except ValueError:
+        return False
+    
+    
 def to_date(input_df):
     """try to convert any columns with 'dt' or 'date' at beginning or end of name or with a regex date in [0] to datetime
 
@@ -76,9 +93,8 @@ def to_date(input_df):
     
     log.info("attempting to fix dates")
     for col in input_df.columns:
-        date_regex = re.match('(\d{1,4})[^0-9a-zA-Z](\d{1,4})[^0-9a-zA-Z](\d{1,4})', str(input_df[col][0]))
         if any([piece for piece in ['dt', 'date'] if re.match('^{0}|.*{0}$'.format(piece), col.lower())])\
-                or (date_regex and date_regex[0] == str(input_df[col][0]).strip()):
+                or (is_date(str(input_df[col][0]).strip())):
             input_df[col] = pd.to_datetime(input_df[col], infer_datetime_format=True, errors='coerce')
             log.info("Attempted to correct {} to datetime - did it work? {}\n"
                   .format(col, input_df[col].dtype.kind == 'M'))  # 'M' is numpy dtype for datetime
@@ -112,7 +128,7 @@ def avoid_clob(input_df: pd.DataFrame):
             if char_len > 4000:
                 log.info("sorry bucko, {} is stuck as clob length {}".format(col, char_len))
             else:
-                dtype_dict[col] = String()
+                dtype_dict[col] = String(char_len)
     try:
         log.info("\nlist of string conversions: \n{}".format(json.dumps(dtype_dict, indent=2)))
     except:
