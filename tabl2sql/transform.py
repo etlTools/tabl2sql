@@ -129,7 +129,7 @@ def load_data(load_df: pd.DataFrame, db_engine, to_sql_mode='fail', dest_table='
                     unknown_resp = input('Unrecognized error: {} \nWaiting....Fixed? (enter `yes` to continue or `quit`)'.format(sys.exc_info()[0]))
                     if unknown_resp == 'quit': sys.exit(1)
                 
-            log.info("loaded {} lines".format((loop+1)*50000))
+            log.info("loaded {} lines ({}% done)".format((loop+1)*50000, round(100*loop/num_loops)))
 
     log.info('loading completed in {}'.format(timedelta(seconds=int(time.time() - start_time))))
 
@@ -163,16 +163,19 @@ def main(args: list):
     
     conn = create_engine("{}+{}://{}:{}{}/{}".format(pargs.sql, pargs.driver, pargs.user, pargs.pw, pargs.host, pargs.db))
     input_df = populate_df(filenames, seperator=pargs.sep, encoding=pargs.encoding, quote_char=pargs.quote_char, quoting_lev=pargs.quoting_lev)
-    log.debug('cleaning data start: {}'.format(timedelta(seconds=int(time.time() - start_time))))
+    log.debug('recognize & format dates start: {}'.format(input_df.columns, timedelta(seconds=int(time.time() - start_time))))
+    input_df = cleaning.to_date(input_df)
+    log.debug('recognize & format dates result:\n{}\n\n\n\n\n\n cleaning data start: {}'.format(input_df.head(), timedelta(seconds=int(time.time() - start_time))))
     input_df = cleaning.clean_data(input_df)
     log.debug('cleaning data result:\n{}\n\n\n\n\n\n cleaning columns start: {}'.format(input_df.head(), timedelta(seconds=int(time.time() - start_time))))
     input_df = cleaning.clean_cols(input_df)
-    log.debug('cleaning column result:\n{}\n\n\n\n\n\n recognize & format dates start: {}'.format(input_df.columns, timedelta(seconds=int(time.time() - start_time))))
-    input_df = cleaning.to_date(input_df)
-    log.debug('recognize & format dates result:\n{}\n\n\n\n\n\n avoid clob start: {}'.format(input_df.head(), timedelta(seconds=int(time.time() - start_time))))
+    log.debug('cleaning column result:\n{}\n\n\n\n\n\n avoid clob & string sizing start: {}'.format(input_df.columns, timedelta(seconds=int(time.time() - start_time))))
     input_df, dtype_dict = cleaning.avoid_clob(input_df)
     log.debug('string conversion result:\n{}\n\n\n\n\n\n load start: {}'.format(input_df.head(), timedelta(seconds=int(time.time() - start_time))))
     
     load_data(load_df=input_df, db_engine=conn, to_sql_mode=pargs.mode, dest_table=pargs.table, dtype_dict=dtype_dict)
     log.info('Transform Completed in {}'.format(timedelta(seconds=int(time.time() - start_time))))
-    
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])

@@ -11,7 +11,7 @@ import tabl2sql
 args = ['-dirs', '/home/share/data/',  
         '-table', 'new_table',  
         '-sql', 'mysql',  
-        '-driver', 'mysqlconnector',  
+        '-driver', 'pymysql',  
         '-user', 'user',  
         '-pw', 'password',  
         '-host', '@server:port',  

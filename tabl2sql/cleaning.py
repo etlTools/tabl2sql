@@ -1,5 +1,6 @@
 
 # python imports
+import sys
 import pandas as pd
 import re
 import json
@@ -25,10 +26,22 @@ def clean_data(input_df: pd.DataFrame):
     input_df: pd.DataFrame: 
         cleaned DataFrame 
     """
-    # clean unicode & whitespace
-    input_df.replace({r'[^\x00-\x7F]+':''}, regex=True, inplace=True)
-    input_df = input_df.applymap(lambda x: np.nan if pd.isnull(x) else \
-                    (np.nan if isinstance(x, str) and x.isspace() else str(x)))
+    # clean whitespace & sql invalid unicode 
+    
+    
+    unis = '\x00-\x7F'
+    transtab = str.maketrans(dict.fromkeys(unis, ''))
+    
+    def rem_ws_unis(ser):
+        if ser.dtype == 'object':
+            ser = pd.Series([np.nan if pd.isnull(x) else \
+                    (np.nan if isinstance(x, str) and x.isspace() else 
+                    (str(x).translate(transtab)) if isinstance(x, str) else
+                    x) for x in ser])
+        return ser
+    
+    input_df = input_df.apply(rem_ws_unis, axis=0)
+    
     return input_df
 
 
@@ -47,7 +60,7 @@ def clean_cols(input_df: pd.DataFrame):
     """
     # remove whitespace, replace with underscores
     input_df.columns = input_df.columns.str.strip()
-    input_df.columns = input_df.columns.str.replace(' ', '_')
+    input_df.columns = input_df.columns.str.replace('[\s_]+', '_')
     input_df.columns = input_df.columns.str.lower()
     # leave only letters, numbers and underscores
     for j in range(len(input_df.columns.values)):
@@ -72,32 +85,44 @@ def is_date(string, fuzzy=False):
         dateutil.parser.parse(string, fuzzy=fuzzy)
         if re.match('(?:\d{1}|\d{2}|\d{4})[^0-9a-zA-Z](\d{1,4})[^0-9a-zA-Z](?:\d{1}|\d{2}|\d{4})', string):
             return True
-    
     except ValueError:
         return False
-    
-    
-def to_date(input_df):
-    """try to convert any columns with 'dt' or 'date' at beginning or end of name or with a regex date in [0] to datetime
+
+
+def to_date(input_df, date_resp = 'coerce'):
+    """try to convert to datetime any columns with 'dt' or 'date' at beginning or end of name or with a regex date in [0] 
 
     Parameters
     ----------
     input_df : pd.DataFrame
         a pandas dataframe
+    date_resp : str
+        see pd.to_datetime param errors for details
 
     Returns
     ----------
     input_df: pd.DataFrame: 
         DataFrame with recognized date columns converted to datetime
     """
+    def convert_todate(ser, date_resp=date_resp):
+        if any([piece for piece in ['dt', 'date'] if re.match('^{0}|.*{0}$'.format(piece), ser.name.lower())])\
+                or (is_date(str(ser[0]).strip())):
+            while True:
+                try:
+                    ser = pd.to_datetime(ser, infer_datetime_format=True, errors=date_resp)
+                except:
+                    date_resp = input("""Unable to convert :\n\n{} \n\nto datetime\nEnter `raise` if you've fixed the source data and would like to retry 
+                    `ignore` to allow string instead, `coerce` to allow loss of non=datetime data & force conversion, or `quit`""".format(ser))
+                    if date_resp == 'quit': sys.exit(1)
+                    continue
+                break
+            log.info("Attempted to correct {} to datetime - did it work? {}\n"
+                  .format(ser.name, ser.dtype.kind == 'M'))  # 'M' is numpy dtype for datetime
+        return ser
     
     log.info("attempting to fix dates")
-    for col in input_df.columns:
-        if any([piece for piece in ['dt', 'date'] if re.match('^{0}|.*{0}$'.format(piece), col.lower())])\
-                or (is_date(str(input_df[col][0]).strip())):
-            input_df[col] = pd.to_datetime(input_df[col], infer_datetime_format=True, errors='coerce')
-            log.info("Attempted to correct {} to datetime - did it work? {}\n"
-                  .format(col, input_df[col].dtype.kind == 'M'))  # 'M' is numpy dtype for datetime
+    input_df = input_df.apply(convert_todate, axis=0)
+
     log.info("done fixing dates")
     
     return input_df
@@ -122,13 +147,17 @@ def avoid_clob(input_df: pd.DataFrame):
     
     dtype_dict = dict()
     log.info("building string dict")
-    for col in input_df.columns:
-        if input_df[col].dtype == 'object':
-            char_len = input_df[col].apply(str).map(len).max()
+    
+    
+    def check_clob(ser):
+        if ser.dtype == 'object':
+            char_len = ser.apply(str).map(len).max()
             if char_len > 4000:
-                log.info("sorry bucko, {} is stuck as clob length {}".format(col, char_len))
+                log.info("sorry bucko, {} is stuck as clob, length {}".format(ser.name, char_len))
             else:
-                dtype_dict[col] = String(char_len)
+                dtype_dict[ser.name] = String(char_len)
+    input_df.apply(check_clob, axis=0)
+    
     try:
         log.info("\nlist of string conversions: \n{}".format(json.dumps(dtype_dict, indent=2)))
     except:
