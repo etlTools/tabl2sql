@@ -105,19 +105,22 @@ def to_date(input_df, date_resp = 'coerce'):
         DataFrame with recognized date columns converted to datetime
     """
     def convert_todate(ser, date_resp=date_resp):
-        if any([piece for piece in ['dt', 'date'] if re.match('^{0}|.*{0}$'.format(piece), ser.name.lower())])\
-                or (is_date(str(ser[0]).strip())):
-            while True:
-                try:
-                    ser = pd.to_datetime(ser, infer_datetime_format=True, errors=date_resp)
-                except:
-                    date_resp = input("""Unable to convert :\n\n{} \n\nto datetime\nEnter `raise` if you've fixed the source data and would like to retry 
-                    `ignore` to allow string instead, `coerce` to allow loss of non=datetime data & force conversion, or `quit`""".format(ser))
-                    if date_resp == 'quit': sys.exit(1)
-                    continue
-                break
-            log.info("Attempted to correct {} to datetime - did it work? {}\n"
-                  .format(ser.name, ser.dtype.kind == 'M'))  # 'M' is numpy dtype for datetime
+        try:
+            if any([piece for piece in ['dt', 'date'] if re.match('^{0}|.*{0}$'.format(piece), ser.name.lower())])\
+                    or (is_date(str(ser[0]).strip())):
+                while True:
+                    try:
+                        ser = pd.to_datetime(ser, infer_datetime_format=True, errors=date_resp)
+                        log.info("Attempted to correct {} to datetime - did it work? {}\n"
+                              .format(ser.name, ser.dtype.kind == 'M'))  # 'M' is numpy dtype for datetime
+                    except:
+                        date_resp = input("""Unable to convert :\n\n{} \n\nto datetime\nEnter `raise` if you've fixed the source data and would like to retry 
+                        `ignore` to allow string instead, `coerce` to allow loss of non=datetime data & force conversion, or `quit`""".format(ser))
+                        if date_resp == 'quit': sys.exit(1)
+                        continue
+                    break
+        except:
+            log.error("""Data appeared to be date but is likely not:\n\n{} """.format(ser))
         return ser
     
     log.info("attempting to fix dates")
