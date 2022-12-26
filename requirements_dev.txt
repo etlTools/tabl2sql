@@ -1,5 +1,5 @@
 pip==21.1 # up from 19.0.3 due to vulnerability
-wheel==0.33.1
+wheel==0.38.1
 twine==1.13.0
 
 # pip install -r requirements_dev.txt
